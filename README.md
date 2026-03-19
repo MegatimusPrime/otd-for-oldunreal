@@ -40,7 +40,7 @@ Finally, This mod is based on the original **One Tap Dodge** work by **Cadrin** 
 
 ### Quick install
 
-1. Download the latest build (release archive) from this repository’s releases.
+1. Download the latest build from [here](https://github.com/MegatimusPrime/otd-for-oldunreal/releases/latest).
 2. Extract the archive into your Unreal Gold `System/` folder.
 
 The resulting layout should look like:
