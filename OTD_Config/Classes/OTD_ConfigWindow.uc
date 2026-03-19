@@ -6,7 +6,7 @@ class OTD_ConfigWindow expands UWindowFramedWindow;
 function BeginPlay()
 {
 	Super.BeginPlay();
-	WindowTitle = "OTD_ConfigClient";
+	WindowTitle = "One Tap Dodge Configuration";
 	ClientClass = class'OTD_Config.OTD_ConfigClient';
 	bSizable = True;
 }
