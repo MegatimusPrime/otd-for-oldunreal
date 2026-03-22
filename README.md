@@ -26,11 +26,11 @@ This mod aims to provide a modern alternative to the classic double-tapping dodg
 
 - You need **Unreal Gold** with **at least OldUnreal 227j or later** (the mod uses the `ModifyPlayerSpawnClass` hook).
 
-> ⚠️ **OldUnreal 227k or later is strongly recommended** for the best compatibility.
+> ⚠️ **Latest version of OldUnreal is strongly recommended** for the best compatibility.
 
 ### Acknowledgments
 
-Finally, This mod is based on the original **One Tap Dodge** work by **Cadrin** created for UT99, which can be found here:
+Finally, this mod is based on the original **One Tap Dodge for UT99** done by **Cadrin**, which can be found here:
 
 - https://www.moddb.com/games/unreal-tournament/downloads/onetapdodge-v1
 
@@ -55,7 +55,7 @@ The resulting layout should look like:
 
 ### Build from source (Optional)
 
-Alternatively, If you want to build from source, you must compile the UnrealScript packages using `ucc` (UnrealScript compiler) included with OldUnreal.
+Alternatively, if you want to build from source, you must compile the UnrealScript packages using `ucc` (UnrealScript compiler) included with OldUnreal.
 
 - https://wiki.beyondunreal.com/Legacy:Compiling_With_UCC
 
@@ -77,4 +77,25 @@ Object=(Name=OTD_Config.OTD_MenuItem,Class=Class,MetaClass=UMenu.UMenuModMenuIte
 Object=(Name=OTD_Mutator.OTD_PlayerSpawnMutator,Class=Class,MetaClass=Engine.Mutator,Description="One Touch Dodge")
 ```
 
+
+## Licensing and Attribution
+
+This mod is developed for **Unreal Engine 1 – OldUnreal Patch**.
+
+Portions of this mod are based on UnrealScript source code published by the
+**OldUnreal project**, which is made available with the knowledge and permission
+of **Epic Games, Inc.**
+
+- OldUnreal UnrealScript source:
+  https://github.com/OldUnreal/Unreal-PubSrc
+
+This project:
+- Requires a legally obtained copy of *Unreal / Unreal Gold* with the OldUnreal patch
+- Does **not** include any Unreal engine binaries or original game assets
+- Is **non-commercial** and distributed **free of charge**
+- Contains only modified or newly written UnrealScript code
+- Is **not** affiliated with or endorsed by Epic Games or OldUnreal.
+
+All original Unreal® and UnrealScript code remains © Epic Games, Inc.
+OldUnreal modifications remain © OldUnreal contributors.
 
