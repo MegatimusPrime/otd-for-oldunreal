@@ -23,14 +23,22 @@ function vector GetHorizontalMoveIntent()
 function bool IsWallDodging()
 {
 	local Actor HitActor;
-	local vector HitLoc, HitNorm, Dir;
+	local vector HitLoc, HitNorm, Dir, TraceOrigin;
+	local int i;
 
 	if ( !class'OTD_Config.PlayerPrefs'.Default.bWallDodge || Physics != PHYS_Falling )
 		return False;
 
 	Dir = GetHorizontalMoveIntent();
-	HitActor = Trace(HitLoc, HitNorm, Location, Location + -Dir * WallDodgeDistance, True);
-	return (HitActor != None && !HitActor.IsA('Pawn'));
+	TraceOrigin = Location;
+	for ( i = 0; i <= 20; i += 10 )
+	{
+		TraceOrigin.Z -= i;
+		HitActor = Trace(HitLoc, HitNorm, TraceOrigin, TraceOrigin + -Dir * WallDodgeDistance, True);
+		if ( HitActor != None && !HitActor.IsA('Pawn') )
+			return True;
+	} 
+	return False;
 }
 
 state PlayerWalking
@@ -242,6 +250,6 @@ state PlayerWalking
 defaultproperties
 {
 	WallDodgeDistance=50.0 // how close you need to be to a wall to perform a wall dodge
-	WallDodgeUpBoost=160.0 // how much upward velocity is applied when performing a wall dodge
+	WallDodgeUpBoost=160.0 // default upward velocity applied to a dodge
 	WallDodgeUpBoostMultiplier=1.4 // multiplier applied to the upward boost when performing a wall dodge
 }
