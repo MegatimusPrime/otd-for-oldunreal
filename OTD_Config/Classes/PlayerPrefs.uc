@@ -3,10 +3,11 @@
 //=============================================================================
 class PlayerPrefs expands Pawn config(User);
 
-var() config bool bOneTapDodge, bWallDodge;
+var() config bool bOneTapDodge, bWallDodge, bAutoMagReload;
 
 defaultproperties
 {
-	bOneTapDodge=True
-	bWallDodge=True
+	bOneTapDodge=False
+	bWallDodge=False
+	bAutoMagReload=False
 }

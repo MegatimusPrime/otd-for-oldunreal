@@ -4,7 +4,20 @@
 class OTD_NaliPlayer expands NaliPlayer config(User);
 
 var() bool bDodgeLeft, bDodgeRight, bDodgeForward, bDodgeBack;
-var float WallDodgeDistance, WallDodgeUpBoost, WallDodgeUpBoostMultiplier;
+var float DodgeUpBoost, WallDodgeDistance, WallDodgeUpBoostMultiplier;
+
+exec function ReloadAutoMag()
+{
+	if ( !class'OTD_Config.PlayerPrefs'.Default.bAutoMagReload )
+		return;
+	if ( bShowMenu || Len(Level.Pauser) > 0 || (Role < ROLE_Authority) || !CanInteractWithWorld() || (CarriedDecoration != None && CarriedDecoration.CarrierFired(Self, False)) )
+		return;
+	if ( Weapon != None && ClassIsChildOf(Weapon.Class, class'AutoMag') )
+	{
+		if ( AutoMag(Weapon).ClipCount >= 1 && Weapon.AmmoType.AmmoAmount + AutoMag(Weapon).ClipCount > 20 )
+			Weapon.GotoState('NewClip');
+	}
+}
 
 function vector GetHorizontalMoveIntent()
 {
@@ -23,22 +36,19 @@ function vector GetHorizontalMoveIntent()
 function bool IsWallDodging()
 {
 	local Actor HitActor;
-	local vector HitLoc, HitNorm, Dir, TraceOrigin;
-	local int i;
+	local vector HitLoc, HitNorm, Dir, TraceStart, TraceEnd;
 
 	if ( !class'OTD_Config.PlayerPrefs'.Default.bWallDodge || Physics != PHYS_Falling )
 		return False;
 
 	Dir = GetHorizontalMoveIntent();
-	TraceOrigin = Location;
-	for ( i = 0; i <= 20; i += 10 )
-	{
-		TraceOrigin.Z -= i;
-		HitActor = Trace(HitLoc, HitNorm, TraceOrigin, TraceOrigin + -Dir * WallDodgeDistance, True);
-		if ( HitActor != None && !HitActor.IsA('Pawn') )
-			return True;
-	} 
-	return False;
+	TraceStart = Location - CollisionHeight * vect(0,0,1) + -Dir * CollisionRadius;
+	TraceEnd = TraceStart + -Dir * WallDodgeDistance;
+	HitActor = Trace(HitLoc, HitNorm, TraceEnd, TraceStart, False, vect(1,1,1));
+	if ( (HitActor == None) || (!HitActor.bWorldGeometry && (Mover(HitActor) == None)) )
+		return False;
+
+	return True;
 }
 
 state PlayerWalking
@@ -61,7 +71,7 @@ state PlayerWalking
 				bDodgeRight = True;
 		}
 	}
-	
+
 	function PlayerMove( float DeltaTime )
 	{
 		local vector X,Y,Z, NewAccel;
@@ -113,7 +123,7 @@ state PlayerWalking
 				if ( IsWallDodging() && DodgeDir > DODGE_None && DodgeDir < DODGE_Active )
 				{
 					// adds a bit of upward boost to dodge when peforming a wall dodge.
-					WallDodgeUpBoost = Default.WallDodgeUpBoost * Default.WallDodgeUpBoostMultiplier;
+					DodgeUpBoost = Default.DodgeUpBoost * Default.WallDodgeUpBoostMultiplier;
 					SetPhysics(PHYS_Walking);
 				}
 				bDodgeForward = false;
@@ -225,9 +235,9 @@ state PlayerWalking
 		else if (DodgeMove == DODGE_Right)
 			Velocity = -1.5*GroundSpeed*Y + (Velocity Dot X)*X;
 
-		Velocity.Z = WallDodgeUpBoost;
-		// make sure to reset the dodge boost to default after using it, so that it doesn't affect non-wall dodges.
-		WallDodgeUpBoost = Default.WallDodgeUpBoost;
+		Velocity.Z = DodgeUpBoost;
+		// make sure to reset the upward boost to default after using it, so that it doesn't affect non-wall dodges.
+		DodgeUpBoost = Default.DodgeUpBoost;
 		if ( Role == ROLE_Authority )
 		{
 			if( IsUnrealTournamentClient() )
@@ -249,7 +259,7 @@ state PlayerWalking
 
 defaultproperties
 {
-	WallDodgeDistance=50.0 // how close you need to be to a wall to perform a wall dodge
-	WallDodgeUpBoost=160.0 // default upward velocity applied to a dodge
-	WallDodgeUpBoostMultiplier=1.4 // multiplier applied to the upward boost when performing a wall dodge
+	DodgeUpBoost=160.0 // default upward velocity applied to a dodge
+	WallDodgeDistance=32.0 // how close you need to be to a wall to perform a wall dodge
+	WallDodgeUpBoostMultiplier=1.5 // multiplier applied to the upward boost when performing a wall dodge
 }

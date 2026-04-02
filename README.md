@@ -2,29 +2,29 @@
 
 **One Tap Dodge (OTD)** is a movement mod for **Unreal Gold** that brings modern dodge mechanics to classic Unreal gameplay.
 
-It adds a **one-tap dodge** system (press a trigger key once to activate dodge as opposed to classic double-tapping.) and a **wall dodge** mechanic (dodge near a wall to gain a vertical boost) introduced in UT2k3 and later, with an in-game options menu to toggle on/off.
+It adds a **one-tap dodge** system (press a dodge key once while moving in a desired direction to activate dodge as opposed to classic double-tapping a directional key.) with an in-game options menu to toggle on/off.
 
 ---
 
 ## What is it?
 
-This mod aims to provide a modern alternative to the classic double-tapping dodge system, similar to what was available in the UT4 alpha (RIP🙏) or FoxMod for UT3:
+This mod aims to provide a modern alternative to the classic double-tap dodge system, similar to what was available in the UT4 alpha (RIP🙏) or FoxMod for UT3:
 
-- ✅ Now you can dodge reliably with a single key press.
+- ✅ You can now dodge reliably with a single key press.
 - ✅ No more accidentally **jumping off cliffs** or **diving into lava**!
-- ✅ Optionally, you can even wall dodge like it's 2003!!
-- ✅ **In-game options window** to toggle on/off **One Tap Dodge** and **Wall Dodge**.
-- ✅ Designed to work with both the **OG** and **Return to Na Pali (RtNP)** campaigns.
+- ✅ Also supports features such as **Wall Dodge** and **Manual AutoMag Reload**.
+- ✅ Includes an **in‑game config window** for toggling features on/off and binding custom keys.
+- ✅ Designed to work with both the **OG campaign and Return to Na Pali (RtNP)**.
 
 
-![Configuration Menu](docs/images/menu1.png)
+![Preferences](docs/images/menu1.png)
 
-![Mutator](docs/images/menu2.png)
+![Key Bindings](docs/images/menu3.png)
 
 
 ### Requirements
 
-- You need **Unreal Gold** with **at least OldUnreal 227j or later** (the mod uses the `ModifyPlayerSpawnClass` hook).
+- You need **Unreal Gold** with **at least OldUnreal v227j or later** (the mod uses the `ModifyPlayerSpawnClass` hook).
 
 > ⚠️ **Latest version of OldUnreal is strongly recommended** for the best compatibility.
 
@@ -70,12 +70,17 @@ To make the mutator configurable/selectable from the in-game menu, create follow
 Object=(Name=OTD_Config.OTD_MenuItem,Class=Class,MetaClass=UMenu.UMenuModMenuItem,Description="One Tap Dodge Configuration, Enable/disable the One Tap Dodge mod and set the keys to dodge.")
 ```
 
+![On Menu](docs/images/menu4.png)
+
+
 `OTD_Mutator.int`:
 
 ```ini
 [Public]
 Object=(Name=OTD_Mutator.OTD_PlayerSpawnMutator,Class=Class,MetaClass=Engine.Mutator,Description="One Touch Dodge")
 ```
+
+![Mutator](docs/images/menu2.png)
 
 
 ## Licensing and Attribution

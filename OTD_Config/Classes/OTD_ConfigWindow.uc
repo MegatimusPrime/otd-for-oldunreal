@@ -1,21 +1,55 @@
 //=============================================================================
 // OTD_ConfigWindow.
 //=============================================================================
-class OTD_ConfigWindow expands UWindowFramedWindow;
+class OTD_ConfigWindow expands UMenuFramedWindow;
 
-function BeginPlay()
-{
-	Super.BeginPlay();
-	WindowTitle = "One Tap Dodge Configuration";
-	ClientClass = class'OTD_Config.OTD_ConfigClient';
-	bSizable = True;
-}
-
+var localized int WindowWidth;
 
 function Created()
 {
+	bStatusBar = False;
+	bSizable = True;
+
 	Super.Created();
-	SetSize(260, 120);
-	WinLeft = (Root.WinWidth - WinWidth) / 2;
-	WinTop = (Root.WinHeight - WinHeight) / 2;
+
+	MinWinWidth = 200;
+	MinWinHeight = 100;
+
+	SetSizePos();
+}
+
+function SetSizePos()
+{
+	local float W, H;
+
+	GetDesiredDimensions(W, H);
+
+	if ( Root.WinHeight < 400 )
+		SetSize(WindowWidth, Min(Root.WinHeight - 32, H + (LookAndFeel.FrameT.H + LookAndFeel.FrameB.H)));
+	else
+		SetSize(WindowWidth, Min(Root.WinHeight - 50, H + (LookAndFeel.FrameT.H + LookAndFeel.FrameB.H)));
+
+	WinLeft = int(Root.WinWidth / 2 - WinWidth / 2);
+	WinTop = int(Root.WinHeight / 2 - WinHeight / 2);
+}
+
+function ResolutionChanged(float W, float H)
+{
+	SetSizePos();
+	Super.ResolutionChanged(W, H);
+}
+
+function Resized()
+{
+	if ( WinWidth != WindowWidth )
+		WinWidth = WindowWidth;
+
+	Super.Resized();
+}
+
+defaultproperties
+{
+	WindowWidth=300
+	ClientClass=Class'OTD_Config.OTD_ConfigClientWindow'
+	WindowTitle="One Tap Dodge"
 }
