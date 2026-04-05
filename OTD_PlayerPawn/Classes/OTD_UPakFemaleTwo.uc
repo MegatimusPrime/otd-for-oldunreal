@@ -12,7 +12,7 @@ exec function ReloadAutoMag()
 		return;
 	if ( bShowMenu || Len(Level.Pauser) > 0 || (Role < ROLE_Authority) || !CanInteractWithWorld() || (CarriedDecoration != None && CarriedDecoration.CarrierFired(Self, False)) )
 		return;
-	if ( Weapon != None && ClassIsChildOf(Weapon.Class, class'AutoMag') )
+	if ( Weapon != None && ClassIsChildOf(Weapon.Class, class'AutoMag') && !Weapon.IsInState('NewClip') && !Weapon.IsInState('Active') )
 	{
 		if ( AutoMag(Weapon).ClipCount >= 1 && Weapon.AmmoType.AmmoAmount + AutoMag(Weapon).ClipCount > 20 )
 			Weapon.GotoState('NewClip');
