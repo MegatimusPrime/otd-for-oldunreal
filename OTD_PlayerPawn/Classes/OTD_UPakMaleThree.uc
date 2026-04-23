@@ -3,263 +3,57 @@
 //=============================================================================
 class OTD_UPakMaleThree expands UPakMaleThree config(User);
 
-var() bool bDodgeLeft, bDodgeRight, bDodgeForward, bDodgeBack;
-var float DodgeUpBoost, WallDodgeDistance, WallDodgeUpBoostMultiplier;
+var EDodgeDir OTD_DodgeDir;
+var float WallDodgeDistance, WallDodgeUpBoostMultiplier;
+var OTD_PawnLogic PawnLogic;
+
+function PostBeginPlay()
+{
+	Super.PostBeginPlay();
+	PawnLogic = new class'OTD_PawnLogic';
+	PawnLogic.P = Self;
+}
 
 exec function ReloadAutoMag()
 {
-	if ( !class'OTD_Config.PlayerPrefs'.Default.bAutoMagReload )
-		return;
-	if ( bShowMenu || Len(Level.Pauser) > 0 || (Role < ROLE_Authority) || !CanInteractWithWorld() || (CarriedDecoration != None && CarriedDecoration.CarrierFired(Self, False)) )
-		return;
-	if ( Weapon != None && ClassIsChildOf(Weapon.Class, class'AutoMag') && !Weapon.IsInState('NewClip') && !Weapon.IsInState('Active') )
-	{
-		if ( AutoMag(Weapon).ClipCount >= 1 && Weapon.AmmoType.AmmoAmount + AutoMag(Weapon).ClipCount > 20 )
-			Weapon.GotoState('NewClip');
-	}
-}
-
-function vector GetHorizontalMoveIntent()
-{
-	local vector X, Y, Z;
-	local vector Dir;
-
-	GetAxes(ViewRotation, X, Y, Z);
-
-	Dir = aForward * X + aStrafe * Y;
-	Dir.Z = 0;
-	if ( VSize(Dir) > 0.001 )
-		Dir = Normal(Dir);
-	return Dir;
-}
-
-function bool IsWallDodging()
-{
-	local Actor HitActor;
-	local vector HitLoc, HitNorm, Dir, TraceStart, TraceEnd;
-
-	if ( !class'OTD_Config.PlayerPrefs'.Default.bWallDodge || Physics != PHYS_Falling )
-		return False;
-
-	Dir = GetHorizontalMoveIntent();
-	TraceStart = Location - CollisionHeight * vect(0,0,1) + -Dir * CollisionRadius;
-	TraceEnd = TraceStart + -Dir * WallDodgeDistance;
-	HitActor = Trace(HitLoc, HitNorm, TraceEnd, TraceStart, False, vect(1,1,1));
-	if ( (HitActor == None) || (!HitActor.bWorldGeometry && (Mover(HitActor) == None)) )
-		return False;
-
-	return True;
+	PawnLogic.DoReloadAutoMag();
 }
 
 state PlayerWalking
 {
 	exec function OmnidirectionalDodge()
 	{
-		if (DodgeDir >= DODGE_Active)
-			return;
-		if ( bIsCrouching || !class'OTD_Config.PlayerPrefs'.Default.bOneTapDodge || ( Physics != PHYS_Walking && Physics != PHYS_Falling ) )
-			return;
-		else
-		{
-			if (bWasForward)
-				bDodgeForward = True;
-			if (bWasBack)
-				bDodgeBack = True;
-			if (bWasLeft)
-				bDodgeLeft = True;
-			if (bWasRight)
-				bDodgeRight = True;
-		}
+		OTD_DodgeDir = PawnLogic.DoOmnidirectionalDodge();
 	}
 
-	function PlayerMove( float DeltaTime )
+	function ProcessMove(float DeltaTime, vector NewAccel, EDodgeDir DodgeMove, rotator DeltaRot)
 	{
-		local vector X,Y,Z, NewAccel;
-		local EDodgeDir OldDodge;
-		local eDodgeDir DodgeMove;
-		local rotator OldRotation;
-		local float Speed2D;
-		local bool    bSaveJump;
-		local name AnimGroupName;
-
-		if ( Physics==PHYS_Spider )
-			GetAxes(ViewRotation,X,Y,Z);
-		else GetAxes(Rotation,X,Y,Z);
-
-		aForward *= 0.4;
-		aStrafe  *= 0.4;
-		aLookup  *= 0.24;
-		aTurn    *= 0.24;
-
-		// Update acceleration.
-		NewAccel = aForward*X + aStrafe*Y;
-		if ( Physics!=PHYS_Spider )
-			NewAccel.Z = 0;
-		// Check for Dodge move
-		if ( DodgeDir == DODGE_Active )
-			DodgeMove = DODGE_Active;
-		else DodgeMove = DODGE_None;
-		if (DodgeClickTime > 0.0 || class'OTD_Config.PlayerPrefs'.Default.bOneTapDodge)
+		// Normal Dodge
+		if( DodgeDir < DODGE_Active && OTD_DodgeDir != DODGE_None )
 		{
-			if ( DodgeDir < DODGE_Active )
-			{
-				OldDodge = DodgeDir;
-				DodgeDir = DODGE_None;
-				if ((bEdgeForward && bWasForward) || bDodgeForward)
-					DodgeDir = DODGE_Forward;
-				if ((bEdgeBack && bWasBack) || bDodgeBack)
-					DodgeDir = DODGE_Back;
-				if ((bEdgeLeft && bWasLeft) || bDodgeLeft)
-					DodgeDir = DODGE_Left;
-				if ((bEdgeRight && bWasRight) || bDodgeRight)
-					DodgeDir = DODGE_Right;
-				if ( DodgeDir == DODGE_None)
-					DodgeDir = OldDodge;
-				else if ((DodgeDir != OldDodge) && !(bDodgeForward || bDodgeBack || bDodgeLeft || bDodgeRight))
-					DodgeClickTimer = DodgeClickTime + 0.5 * DeltaTime;
-				else
-					DodgeMove = DodgeDir;
-
-				if ( IsWallDodging() && DodgeDir > DODGE_None && DodgeDir < DODGE_Active )
-				{
-					// adds a bit of upward boost to dodge when peforming a wall dodge.
-					DodgeUpBoost = Default.DodgeUpBoost * Default.WallDodgeUpBoostMultiplier;
-					SetPhysics(PHYS_Walking);
-				}
-				bDodgeForward = false;
-				bDodgeBack = false;
-				bDodgeLeft = false;
-				bDodgeRight = false;
-			}
-
-			if (DodgeDir == DODGE_Active && Physics == PHYS_Walking)
-			{
-				// force dodge completion in case if PHYS_Walking was set without calling Landed
-				DodgeDir = DODGE_Done;
-				DodgeClickTimer = 0;
-			}
-
-			if (DodgeDir == DODGE_Done)
-			{
-				DodgeClickTimer -= DeltaTime;
-				if (DodgeClickTimer < -0.35)
-				{
-					DodgeDir = DODGE_None;
-					DodgeClickTimer = DodgeClickTime;
-				}
-			}
-			else if ((DodgeDir != DODGE_None) && (DodgeDir != DODGE_Active))
-			{
-				DodgeClickTimer -= DeltaTime;
-				if (DodgeClickTimer < 0)
-				{
-					DodgeDir = DODGE_None;
-					DodgeClickTimer = DodgeClickTime;
-				}
-			}
+			if ( class'OTD_Config.PlayerPrefs'.Default.bOneTapDodge )
+				DodgeMove = OTD_DodgeDir;
+			OTD_DodgeDir = DODGE_None;
 		}
 
-		AnimGroupName = GetAnimGroup(AnimSequence);
-		if ( (Physics == PHYS_Walking) && (AnimGroupName != 'Dodge') )
+		// Wall Dodge
+		if ( PawnLogic.CanWallDodge(WallDodgeDistance) && DodgeMove > DODGE_None && DodgeMove < DODGE_Active )
 		{
-			//if walking, look up/down stairs - unless player is rotating view
-			if ( !bKeyboardLook && (bLook == 0) )
-			{
-				if ( bLookUpStairs )
-					ViewRotation.Pitch = FindStairRotation(deltaTime);
-				else if ( bCenterView )
-				{
-					ViewRotation.Pitch = ViewRotation.Pitch & 65535;
-					if (ViewRotation.Pitch > 32768)
-						ViewRotation.Pitch -= 65536;
-					ViewRotation.Pitch = ViewRotation.Pitch * (1 - 12 * FMin(0.0833, deltaTime));
-					if ( Abs(ViewRotation.Pitch) < 1000 )
-						ViewRotation.Pitch = 0;
-				}
-			}
-
-			Speed2D = FMin(VSize2D(Velocity), GroundSpeed*1.5f);
-			//add bobbing when walking
-			if ( !bShowMenu )
-			{
-				if ( Speed2D < 10 || GroundSpeed == 0 )
-					BobTime += 0.2 * DeltaTime * FClamp(Region.Zone.ZoneTimeDilation,0.1,10.f);
-				else
-					BobTime += DeltaTime * FClamp(Region.Zone.ZoneTimeDilation,0.1,10.f) * (0.3 + 0.7 * Speed2D/GroundSpeed);
-				WalkBob = Y * 0.65 * Bob * Speed2D * sin(6.0 * BobTime);
-				if ( Speed2D < 10 )
-					WalkBob.Z = Bob * 30 * sin(12 * BobTime);
-				else WalkBob.Z = Bob * Speed2D * sin(12 * BobTime);
-			}
-		}
-		else if ( !bShowMenu )
-		{
-			BobTime = 0;
-			WalkBob = WalkBob * (1 - FMin(1, 8 * deltatime));
+			SetPhysics(PHYS_Walking);
+			Dodge(DodgeMove);
+			// adds a bit of upward boost to dodge when peforming a wall dodge.
+			Velocity.Z *= WallDodgeUpBoostMultiplier;
 		}
 
-		// Update rotation.
-		OldRotation = Rotation;
-		UpdateRotation(DeltaTime, 1);
-
-		if ( bPressedJump && (AnimGroupName == 'Dodge') )
-		{
-			bSaveJump = true;
-			bPressedJump = false;
-		}
-		else
-			bSaveJump = false;
-
-		if ( Role < ROLE_Authority ) // then save this move and replicate it
-			ReplicateMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
-		else
-			ProcessMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
-		bPressedJump = bSaveJump;
-	}
-
-	function Dodge(eDodgeDir DodgeMove)
-	{
-		local vector X,Y,Z;
-		local float OldBaseEyeHeight;
-
-		if ( bIsCrouching || (Physics != PHYS_Walking) )
-			return;
-
-		GetAxes(Rotation,X,Y,Z);
-		if (DodgeMove == DODGE_Forward)
-			Velocity = 1.5*GroundSpeed*X + (Velocity Dot Y)*Y;
-		else if (DodgeMove == DODGE_Back)
-			Velocity = -1.5*GroundSpeed*X + (Velocity Dot Y)*Y;
-		else if (DodgeMove == DODGE_Left)
-			Velocity = 1.5*GroundSpeed*Y + (Velocity Dot X)*X;
-		else if (DodgeMove == DODGE_Right)
-			Velocity = -1.5*GroundSpeed*Y + (Velocity Dot X)*X;
-
-		Velocity.Z = DodgeUpBoost;
-		// make sure to reset the upward boost to default after using it, so that it doesn't affect non-wall dodges.
-		DodgeUpBoost = Default.DodgeUpBoost;
-		if ( Role == ROLE_Authority )
-		{
-			if( IsUnrealTournamentClient() )
-				PlayOwnedSound(JumpSound, SLOT_Talk, 1.0, true, 800, 1.0 );
-			else PlaySound(JumpSound, SLOT_Talk, 1.0, true, 800, 1.0 );
-		}
-		if (bUpdatePosition)
-		{
-			OldBaseEyeHeight = BaseEyeHeight;
-			PlayDodge(DodgeMove);
-			BaseEyeHeight = OldBaseEyeHeight;
-		}
-		else
-			PlayDodge(DodgeMove);
-		DodgeDir = DODGE_Active;
-		SetPhysics(PHYS_Falling);
+		// If double tap dodge is disabled (i.e. DodgeClickTime <= 0.0), DODGE_Done won't be processed at PlayerMove().
+		// So we do the dodge timer management here.
+		PawnLogic.ProcessDodgeTimer(DeltaTime);
+		Super.ProcessMove(DeltaTime, NewAccel, DodgeMove, DeltaRot);
 	}
 }
 
 defaultproperties
 {
-	DodgeUpBoost=160.0 // default upward velocity applied to a dodge
 	WallDodgeDistance=32.0 // how close you need to be to a wall to perform a wall dodge
 	WallDodgeUpBoostMultiplier=1.5 // multiplier applied to the upward boost when performing a wall dodge
 }
