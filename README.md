@@ -12,7 +12,7 @@ This mod aims to provide a modern alternative to the classic double-tap dodge sy
 
 - ✅ You can now dodge reliably with a single key press.
 - ✅ No more accidentally **jumping off cliffs** or **diving into lava**!
-- ✅ Also supports features such as **Wall Dodge** and **Manual AutoMag Reload**.
+- ✅ Also supports features such as **Double Jump**, **Wall Dodge** and **Manual AutoMag Reload**.
 - ✅ Includes an **in‑game config window** for toggling features on/off and binding custom keys.
 - ✅ Designed to work with both the **OG campaign and Return to Na Pali (RtNP)**.
 
@@ -24,9 +24,9 @@ This mod aims to provide a modern alternative to the classic double-tap dodge sy
 
 ### Requirements
 
-- You need **Unreal Gold** with **at least OldUnreal v227j or later** (the mod uses the `ModifyPlayerSpawnClass` hook).
+- You need **Unreal Gold** with **at least OldUnreal v227k or later** (the mod uses the `ModifyPlayerSpawnClass` hook).
 
-> ⚠️ **Latest version of OldUnreal is strongly recommended** for the best compatibility.
+> ⚠️ v227j might work as well, however v227k above is strongly recommended.
 
 ### Acknowledgments
 

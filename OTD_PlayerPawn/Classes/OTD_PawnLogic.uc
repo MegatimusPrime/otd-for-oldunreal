@@ -3,6 +3,8 @@
 //=============================================================================
 class OTD_PawnLogic extends Object;
 
+var bool bCanDoubleJump, bDodging;
+var float WallDodgeDistance, WallDodgeUpBoostMultiplier, MultiJumpBoost, MultiJumpThreshold, DodgeJumpThreshold;
 var PlayerPawn P;
 
 function DoReloadAutoMag()
@@ -54,12 +56,26 @@ function vector GetHorizontalMoveIntent()
 	return Dir;
 }
 
-function bool CanWallDodge(float WallDodgeDistance)
+function bool CanDoubleJump()
+{
+	if ( !class'OTD_Config.PlayerPrefs'.Default.bDoubleJump )
+		return False;
+	return ( bCanDoubleJump && !bDodging && P.Physics == PHYS_Falling && (Abs(P.Velocity.Z) < MultiJumpThreshold) );
+}
+
+function bool CanDodgeJump()
+{
+	if ( !class'OTD_Config.PlayerPrefs'.Default.bDoubleJump )
+		return False;
+	return ( bCanDoubleJump && bDodging && (Abs(P.Velocity.Z) < DodgeJumpThreshold) );
+}
+
+function bool CanWallDodge()
 {
 	local Actor HitActor;
 	local vector HitLoc, HitNorm, Dir, TraceStart, TraceEnd;
 
-	if ( !class'OTD_Config.PlayerPrefs'.Default.bWallDodge || P.Physics != PHYS_Falling )
+	if ( !class'OTD_Config.PlayerPrefs'.Default.bWallDodge || P.Physics != PHYS_Falling || bDodging )
 		return False;
 
 	Dir = GetHorizontalMoveIntent();
@@ -102,4 +118,13 @@ function ProcessDodgeTimer(float DeltaTime)
 			}
 		}
 	}
+}
+
+defaultproperties
+{
+	WallDodgeDistance=32.0 // how close you need to be to a wall to perform a wall dodge
+	WallDodgeUpBoostMultiplier=1.5 // multiplier applied to the upward boost when performing a wall dodge
+	MultiJumpBoost=24.0
+	MultiJumpThreshold=100
+	DodgeJumpThreshold=110
 }

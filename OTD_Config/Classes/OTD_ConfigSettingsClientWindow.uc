@@ -5,6 +5,7 @@ class OTD_ConfigSettingsClientWindow extends UMenuPageWindow config(User);
 
 var UWindowCheckBox OTDCheckBox;
 var UWindowCheckBox WallDodgeCheckBox;
+var UWindowCheckBox DoubleJumpCheckBox;
 var UWindowCheckBox AutoMagReloadCheckBox;
 
 var float ControlOffset;
@@ -32,6 +33,14 @@ function Created()
 	WallDodgeCheckBox.SetHelpText("Enable or disable wall dodging. Works with both one tap and normal dodge.");
 	WallDodgeCheckBox.SetFont(F_Normal);
 	WallDodgeCheckBox.Align = TA_Right;
+	ControlOffset += 25;
+
+	DoubleJumpCheckBox = UWindowCheckBox(CreateControl(class'UWindowCheckBox', ControlLeft, ControlOffset, ControlWidth, 1));
+	DoubleJumpCheckBox.bChecked = class'OTD_Config.PlayerPrefs'.Default.bDoubleJump;
+	DoubleJumpCheckBox.SetText("Double Jump");
+	DoubleJumpCheckBox.SetHelpText("Enable or disable double jump. If enabled in conjunction with Wall Dodge, this allow Dodge Jump as well.");
+	DoubleJumpCheckBox.SetFont(F_Normal);
+	DoubleJumpCheckBox.Align = TA_Right;
 	ControlOffset += 25;
 
 	AutoMagReloadCheckBox = UWindowCheckBox(CreateControl(class'UWindowCheckBox', ControlLeft, ControlOffset, ControlWidth, 1));
@@ -62,6 +71,9 @@ function BeforePaint(Canvas C, float X, float Y)
 	WallDodgeCheckBox.AutoWidth(C);
 	WallDodgeCheckBox.WinLeft = CheckboxRight;
 
+	DoubleJumpCheckBox.AutoWidth(C);
+	DoubleJumpCheckBox.WinLeft = CheckboxLeft;
+
 	AutoMagReloadCheckBox.AutoWidth(C);
 	AutoMagReloadCheckBox.WinLeft = CheckboxLeft;
 }
@@ -80,6 +92,10 @@ function Notify(UWindowDialogControl C, byte E)
 					break;
 				case WallDodgeCheckBox:
 					class'OTD_Config.PlayerPrefs'.Default.bWallDodge = WallDodgeCheckBox.bChecked;
+					class'OTD_Config.PlayerPrefs'.Static.StaticSaveConfig();
+					break;
+				case DoubleJumpCheckBox:
+					class'OTD_Config.PlayerPrefs'.Default.bDoubleJump = DoubleJumpCheckBox.bChecked;
 					class'OTD_Config.PlayerPrefs'.Static.StaticSaveConfig();
 					break;
 				case AutoMagReloadCheckBox:

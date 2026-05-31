@@ -4,7 +4,6 @@
 class OTD_SkaarjPlayer expands SkaarjPlayer config(User);
 
 var EDodgeDir OTD_DodgeDir;
-var float WallDodgeDistance, WallDodgeUpBoostMultiplier;
 var OTD_PawnLogic PawnLogic;
 
 function PostBeginPlay()
@@ -12,6 +11,13 @@ function PostBeginPlay()
 	Super.PostBeginPlay();
 	PawnLogic = new class'OTD_PawnLogic';
 	PawnLogic.P = Self;
+}
+
+function Landed(vector HitNormal)
+{
+	PawnLogic.bCanDoubleJump = True;
+	PawnLogic.bDodging = False;
+	Super.Landed(HitNormal);
 }
 
 exec function ReloadAutoMag()
@@ -28,8 +34,19 @@ state PlayerWalking
 
 	function ProcessMove(float DeltaTime, vector NewAccel, EDodgeDir DodgeMove, rotator DeltaRot)
 	{
-		// Normal Dodge
-		if( DodgeDir < DODGE_Active && OTD_DodgeDir != DODGE_None )
+		if ( PawnLogic.CanDoubleJump() && bPressedJump )
+		{
+			// Double Jump
+			DoubleJump();
+		}
+		else if ( PawnLogic.CanDodgeJump() && bPressedJump )
+		{
+			// Dogde Jump
+			DoubleJump();
+		}
+
+		// Process One Tap Dodge
+		if( DodgeDir < DODGE_Active && OTD_DodgeDir != DODGE_None && !PawnLogic.bDodging)
 		{
 			if ( class'OTD_Config.PlayerPrefs'.Default.bOneTapDodge )
 				DodgeMove = OTD_DodgeDir;
@@ -37,12 +54,12 @@ state PlayerWalking
 		}
 
 		// Wall Dodge
-		if ( PawnLogic.CanWallDodge(WallDodgeDistance) && DodgeMove > DODGE_None && DodgeMove < DODGE_Active )
+		if ( PawnLogic.CanWallDodge() && DodgeMove > DODGE_None && DodgeMove < DODGE_Active )
 		{
 			SetPhysics(PHYS_Walking);
 			Dodge(DodgeMove);
 			// adds a bit of upward boost to dodge when peforming a wall dodge.
-			Velocity.Z *= WallDodgeUpBoostMultiplier;
+			Velocity.Z *= PawnLogic.WallDodgeUpBoostMultiplier;
 		}
 
 		// If double tap dodge is disabled (i.e. DodgeClickTime <= 0.0), DODGE_Done won't be processed at PlayerMove().
@@ -50,10 +67,46 @@ state PlayerWalking
 		PawnLogic.ProcessDodgeTimer(DeltaTime);
 		Super.ProcessMove(DeltaTime, NewAccel, DodgeMove, DeltaRot);
 	}
+
+	function Dodge(eDodgeDir DodgeMove)
+	{
+		PawnLogic.bDodging = True;
+		Super.Dodge(DodgeMove);
+	}
+
+	function DoubleJump()
+	{
+		if ( PawnLogic.bCanDoubleJump )
+		{
+			Velocity.Z = JumpZ + PawnLogic.MultiJumpBoost;
+			PlaySound(JumpSound, SLOT_Talk, 1.5, True, 1200, 1.0 );
+			PlayInAir();
+			SetPhysics(PHYS_Falling);
+			PawnLogic.bCanDoubleJump = False;
+		}
+	}
 }
 
-defaultproperties
+function PlayDodge(eDodgeDir DodgeMove)
 {
-	WallDodgeDistance=32.0 // how close you need to be to a wall to perform a wall dodge
-	WallDodgeUpBoostMultiplier=1.5 // multiplier applied to the upward boost when performing a wall dodge
+	if ( !class'OTD_Config.PlayerPrefs'.Default.bDoubleJump )
+	{
+		Super.PlayDodge(DodgeMove);
+	}
+	else
+	{
+		// Can't seem to interrupt Dodge/Lunge animation with double jump easily...
+		// This is sort of bandaid solution but it's good enough for now.
+		Velocity.Z = 210;
+		if ( bUpdatePosition )
+			return;
+		if ( DodgeMove == DODGE_Left )
+			TweenAnim('LeftDodge', 0.25);
+		else if ( DodgeMove == DODGE_Right )
+			TweenAnim('RightDodge', 0.25);
+		else if ( DodgeMove == DODGE_Forward )
+			TweenAnim('Lunge', 0.25);
+		else
+			PlayDuck();
+	}
 }
